@@ -74,7 +74,7 @@ public List<String> generateStrings(int count) {
 }
 ```
 How it works:
-Starts with the initial non-terminal S. Expands using production rules until all non-terminals are replaced. Returns fully generated strings from the language.
+The convertToFiniteAutomaton() method transforms a context-free grammar into a finite automaton by converting its production rules into state transitions. It begins by creating an empty finite automaton and then iterates through each non-terminal in the grammar. For each production rule, it determines whether it consists only of a terminal or a terminal followed by a non-terminal. If the rule contains only a terminal, it creates a transition leading to a special final state, ‘X’. If the rule consists of a terminal followed by a non-terminal, it establishes a transition between the corresponding states. Once all rules are processed, the method returns the completed finite automaton, which can now recognize valid sequences based on the grammar.
 
 
 ## Converting Grammar to a Finite Automaton
@@ -95,8 +95,7 @@ public FiniteAutomaton convertToFiniteAutomaton() {
 }
 ```
 How it works:
-Converts each production rule into state transitions. If a rule leads to a terminal, it creates a transition to a final state (X). If a rule contains a non-terminal, it creates a transition between states.
-
+The generateStrings(int count) method creates random strings based on a given grammar. It starts by initializing an empty list to store the generated strings and begins each string with the starting symbol ‘S’. The method then expands this symbol by continuously replacing non-terminals with randomly chosen production rules from the grammar. This process continues until no non-terminals remain in the string, ensuring that only terminals are left. Once a fully formed string is generated, it is added to the list. The method repeats this process until the desired number of strings is generated. Finally, it returns the list of randomly generated strings, providing different variations based on the grammar’s rules.
 
 
 ## Checking if a String is Accepted by the Automaton
@@ -115,11 +114,9 @@ public boolean isAccepted(String input) {
 }
 ```
 How it works:
-Starts from state S. Moves through valid state transitions using input characters. If the last state is final, the string is accepted.
+The isAccepted(String input) method checks whether a given input string is accepted by the finite automaton. It begins by setting the current state to the start state, represented by the character ‘S’. The method then processes each symbol in the input string one by one. For each symbol, it checks if there is a valid transition from the current state to the next state. If no valid transition exists, the method immediately returns false, indicating that the string is not accepted. If a valid transition exists, the automaton moves to the next state. After processing all symbols in the input, the method checks if the automaton is in one of its final states. If it is, the string is accepted and the method returns true; otherwise, it returns false. This process ensures that the string is valid according to the finite automaton’s transitions and final states.
 
 
 
 ## Conclusions
-This project successfully implements regular grammars and their conversion to finite automata, demonstrating key concepts in formal languages. It allows string generation, grammar-to-automaton conversion, and string validation using state transitions. The structured approach ensures clarity and efficiency, making it a solid foundation for further exploration in automata theory and computational linguistics. 
-
-
+In conclusion, the methods we’ve discussed collectively form a robust system for simulating and manipulating a finite automaton based on a context-free grammar. The convertToFiniteAutomaton() method bridges the gap between a grammar and an automaton by transforming production rules into state transitions, allowing the automaton to process valid strings. On the other hand, the generateStrings(int count) method allows for the random generation of strings based on the grammar, showcasing the grammar's ability to produce different valid sequences. Finally, the isAccepted(String input) method serves as the key to validating whether a given string can be processed by the automaton, ensuring it follows the transitions and ends in an acceptable state. Together, these methods provide a complete framework for converting, generating, and validating strings within the context of formal language theory.
