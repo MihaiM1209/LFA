@@ -178,7 +178,7 @@ class DFAConverter {
 
 This project uses standard Java libraries, so no additional dependencies are required.
 
-#### Output Example
+## Output Example
 ```
 States: [q0, q1, q2]
 Alphabet: [a, b]
