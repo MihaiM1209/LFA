@@ -51,7 +51,7 @@ Is 'dba' accepted? false
 
 
 ## Generating Strings from the Grammar
-```
+```java
 public List<String> generateStrings(int count) {
     List<String> generatedStrings = new ArrayList<>();
     Random random = new Random();
@@ -78,7 +78,7 @@ The convertToFiniteAutomaton() method transforms a context-free grammar into a f
 
 
 ## Converting Grammar to a Finite Automaton
-```
+```java
 public FiniteAutomaton convertToFiniteAutomaton() {
     FiniteAutomaton fa = new FiniteAutomaton();
 
@@ -99,7 +99,7 @@ The generateStrings(int count) method creates random strings based on a given gr
 
 
 ## Checking if a String is Accepted by the Automaton
-```
+```java
 public boolean isAccepted(String input) {
     char currentState = 'S'; // Start state
 
