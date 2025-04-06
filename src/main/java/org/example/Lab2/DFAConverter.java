@@ -3,6 +3,7 @@ package org.example.Lab2;
 import java.util.*;
 
 class DFAConverter {
+
     public static FiniteAutomaton convertNDFAtoDFA(FiniteAutomaton ndfa) {
         Set<Set<String>> dfaStates = new HashSet<>();
         Map<Set<String>, String> stateNames = new HashMap<>();
@@ -12,7 +13,7 @@ class DFAConverter {
         Set<String> startSet = epsilonClosure(new HashSet<>(Collections.singleton(ndfa.startState)), ndfa);
         queue.add(startSet);
         dfaStates.add(startSet);
-        stateNames.put(startSet, String.join("", new TreeSet<>(startSet)));
+        stateNames.put(startSet, formatStateName(startSet));
 
         while (!queue.isEmpty()) {
             Set<String> currentSet = queue.poll();
@@ -31,7 +32,7 @@ class DFAConverter {
                     if (!stateNames.containsKey(newStateSet)) {
                         queue.add(newStateSet);
                         dfaStates.add(newStateSet);
-                        stateNames.put(newStateSet, String.join("", new TreeSet<>(newStateSet)));
+                        stateNames.put(newStateSet, formatStateName(newStateSet));
                     }
                     dfaTransitions.get(currentStateName).put(symbol, stateNames.get(newStateSet));
                 }
@@ -48,11 +49,18 @@ class DFAConverter {
             }
         }
 
-        return new FiniteAutomaton(new HashSet<>(stateNames.values()), ndfa.alphabet, convertMapFormat(dfaTransitions), stateNames.get(startSet), dfaFinalStates);
+        return new FiniteAutomaton(new HashSet<>(stateNames.values()), ndfa.alphabet, convertMapFormat(dfaTransitions),
+                stateNames.get(startSet), dfaFinalStates);
+    }
+
+    private static String formatStateName(Set<String> states) {
+        List<String> sortedStates = new ArrayList<>(states);
+        Collections.sort(sortedStates);
+        return String.join("_", sortedStates);
     }
 
     private static Set<String> epsilonClosure(Set<String> states, FiniteAutomaton ndfa) {
-        return states; // Assuming no epsilon transitions, return states as-is
+        return states;
     }
 
     private static Map<String, Map<Character, Set<String>>> convertMapFormat(Map<String, Map<Character, String>> input) {

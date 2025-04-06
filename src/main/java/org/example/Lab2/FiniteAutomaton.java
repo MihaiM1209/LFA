@@ -2,6 +2,8 @@ package org.example.Lab2;
 
 import java.util.*;
 
+
+
 class FiniteAutomaton {
     protected Set<String> states;
     protected Set<Character> alphabet;
@@ -19,6 +21,7 @@ class FiniteAutomaton {
         this.finalStates = finalStates;
     }
 
+
     public boolean isDeterministic() {
         for (Map<Character, Set<String>> stateTransitions : transitions.values()) {
             for (Set<String> destinationStates : stateTransitions.values()) {
@@ -30,6 +33,7 @@ class FiniteAutomaton {
         return true;
     }
 
+    // Print the details of the automaton
     public void printFA() {
         System.out.println("States: " + states);
         System.out.println("Alphabet: " + alphabet);
@@ -37,5 +41,4 @@ class FiniteAutomaton {
         System.out.println("Start State: " + startState);
         System.out.println("Final States: " + finalStates);
     }
-
 }
