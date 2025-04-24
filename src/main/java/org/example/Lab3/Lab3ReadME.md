@@ -1,7 +1,8 @@
-Lexer & Scanner
+# Regular Expressions
 
-## Author: Mustea Mihai
-### FAF-231
+### Course: Formal Languages & Finite Automata
+
+### Author: Mustea Mihai
 
 ## Theory
 
