@@ -1,0 +1,1 @@
+// device router1 interface eth0 ip 192.168.0.1 mac 00ab.cd34.ef56 vlan 10 desc "Main uplink"
