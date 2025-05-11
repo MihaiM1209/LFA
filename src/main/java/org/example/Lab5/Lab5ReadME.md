@@ -166,6 +166,9 @@ This loop recursively breaks productions longer than 2 symbols into binary produ
 
 
 
+## Conclusion
+This implementation of the Grammar class efficiently models and transforms a formal grammar, applying key operations like eliminating epsilon productions, removing unit productions, and converting the grammar to Chomsky Normal Form (CNF). These transformations simplify the grammar, making it more suitable for tasks like syntax parsing and compiler construction. By structuring the grammar in a standardized form, the class ensures its usability in computational applications, contributing to more efficient language processing.
+
 
 
 
