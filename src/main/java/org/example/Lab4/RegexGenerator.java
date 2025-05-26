@@ -1,158 +1,351 @@
 package org.example.Lab4;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RegexGenerator {
 
-    public static List<String> generateValidStrings() {
-        List<String> firstPart = new ArrayList<>();
-        List<String> secondPart = new ArrayList<>();
-        List<String> thirdPart = new ArrayList<>();
+    // Base class for parse tree nodes
+    public static abstract class Node {
+        public abstract List<String> generate();
+        public abstract MatchResult match(String s, int pos);
+    }
 
-        // 1. (S|T)(U|V)W*Y+24
-        for (char firstLetter : new char[] {'S', 'T'}) {
-            for (char secondLetter : new char[] {'U', 'V'}) {
-                for (int wCount = 0; wCount <= 5; wCount++) {
-                    for (int yCount = 1; yCount <= 5; yCount++) {
-                        String wPart = new String(new char[wCount]).replace('\0', 'W');
-                        String yPart = new String(new char[yCount]).replace('\0', 'Y');
-                        String combo = firstLetter + "" + secondLetter + wPart + yPart + "24";
-                        firstPart.add(combo);
+    // Result of matching: explanation steps, new position, success flag
+    public static class MatchResult {
+        public final List<String> explanation;
+        public final int newPos;
+        public final boolean success;
+
+        public MatchResult(List<String> explanation, int newPos, boolean success) {
+            this.explanation = explanation;
+            this.newPos = newPos;
+            this.success = success;
+        }
+    }
+
+    // Literal node
+    public static class LiteralNode extends Node {
+        public final String value;
+        public LiteralNode(String value) { this.value = value; }
+
+        @Override
+        public List<String> generate() {
+            return Collections.singletonList(value);
+        }
+
+        @Override
+        public MatchResult match(String s, int pos) {
+            if (s.startsWith(value, pos)) {
+                return new MatchResult(
+                        Collections.singletonList("Matched literal '" + value + "' at position " + pos),
+                        pos + value.length(),
+                        true
+                );
+            } else {
+                return new MatchResult(
+                        Collections.singletonList("Failed to match literal '" + value + "' at position " + pos),
+                        pos,
+                        false
+                );
+            }
+        }
+    }
+
+    // Sequence node
+    public static class SequenceNode extends Node {
+        public final List<Node> elements;
+        public SequenceNode(List<Node> elements) { this.elements = elements; }
+
+        @Override
+        public List<String> generate() {
+            List<String> result = Collections.singletonList("");
+            for (Node elem : elements) {
+                List<String> subs = elem.generate();
+                List<String> newResult = new ArrayList<>();
+                for (String prefix : result) {
+                    for (String sub : subs) {
+                        newResult.add(prefix + sub);
                     }
                 }
+                result = newResult;
             }
+            return result;
         }
 
-        // 2) L(M|N)O^3P*Q(2|3)
-        for (char letter : new char[] {'M', 'N'}) {
-            for (int pCount = 0; pCount <= 2; pCount++) {
-                String pPart = new String(new char[pCount]).replace('\0', 'P');
-                for (char digit : new char[] {'2', '3'}) {
-                    String combo = "L" + letter + "000" + pPart + "Q" + digit;
-                    secondPart.add(combo);
+        @Override
+        public MatchResult match(String s, int pos) {
+            List<String> explanation = new ArrayList<>();
+            int currentPos = pos;
+            for (int i = 0; i < elements.size(); i++) {
+                MatchResult res = elements.get(i).match(s, currentPos);
+                explanation.addAll(res.explanation);
+                if (!res.success) {
+                    return new MatchResult(explanation, res.newPos, false);
                 }
+                currentPos = res.newPos;
             }
+            return new MatchResult(explanation, currentPos, true);
         }
-
-        // 3) R*S(T|U|V)W(X|Y|Z)^2
-        List<String> xyzPairs = new ArrayList<>();
-        for (char c1 : new char[] {'X', 'Y', 'Z'}) {
-            for (char c2 : new char[] {'X', 'Y', 'Z'}) {
-                xyzPairs.add(c1 + "" + c2);
-            }
-        }
-
-        for (int rCount = 0; rCount <= 5; rCount++) {
-            String rPart = new String(new char[rCount]).replace('\0', 'R');
-            for (char middleLetter : new char[] {'T', 'U', 'V'}) {
-                for (String pair : xyzPairs) {
-                    String combo = rPart + "S" + middleLetter + "W" + pair;
-                    thirdPart.add(combo);
-                }
-            }
-        }
-
-        List<String> result = new ArrayList<>();
-        result.addAll(firstPart);
-        result.addAll(secondPart);
-        result.addAll(thirdPart);
-        return result;
     }
 
-    public static String sequenceProcessing(String str) {
-        StringBuilder explanation = new StringBuilder();
-        int idx = 0;
+    // Alternation node
+    public static class AlternationNode extends Node {
+        public final List<Node> options;
+        public AlternationNode(List<Node> options) { this.options = options; }
 
-        // Step 1: (S|T)
-        if (str.length() < 1 || (str.charAt(0) != 'S' && str.charAt(0) != 'T')) {
-            return "Does not match step 1";
-        }
-        explanation.append("Step 1: Matched '").append(str.charAt(0)).append("' as (S|T)\n");
-        idx++;
-
-        // Step 2: (U|V)
-        if (str.length() < 2 || (str.charAt(1) != 'U' && str.charAt(1) != 'V')) {
-            return "Does not match step 2";
-        }
-        explanation.append("Step 2: Matched '").append(str.charAt(1)).append("' as (U|V)\n");
-        idx++;
-
-        // Step 3: W*
-        int wCount = 0;
-        while (idx < str.length() && str.charAt(idx) == 'W') {
-            wCount++;
-            idx++;
-        }
-        explanation.append("Step 3: Matched 'W' repeated ").append(wCount).append(" times\n");
-
-        // Step 4: Y+
-        int yCount = 0;
-        while (idx < str.length() && str.charAt(idx) == 'Y') {
-            yCount++;
-            idx++;
-        }
-        if (yCount < 1) {
-            return "Does not match step 4";
-        }
-        explanation.append("Step 4: Matched 'Y' repeated ").append(yCount).append(" times\n");
-
-        // Step 5: 24
-        if (idx + 2 <= str.length() && str.substring(idx, idx + 2).equals("24")) {
-            explanation.append("Step 5: Matched '24'\n");
-            idx += 2;
-        } else {
-            return "Does not match step 5";
+        @Override
+        public List<String> generate() {
+            List<String> results = new ArrayList<>();
+            for (Node option : options) {
+                results.addAll(option.generate());
+            }
+            return results;
         }
 
-        // Final check
-        if (idx == str.length()) {
-            explanation.append("String fully matched expression 1!");
-        } else {
-            explanation.append("String has extra chars beyond the pattern.");
+        @Override
+        public MatchResult match(String s, int pos) {
+            List<String> explanation = new ArrayList<>();
+            List<List<String>> altExplanations = new ArrayList<>();
+            for (Node option : options) {
+                MatchResult res = option.match(s, pos);
+                if (res.success) {
+                    explanation.add("Matched alternation option at position " + pos);
+                    explanation.addAll(res.explanation);
+                    return new MatchResult(explanation, res.newPos, true);
+                } else {
+                    altExplanations.add(res.explanation);
+                }
+            }
+            explanation.add("Failed to match any alternation option at position " + pos);
+            for (List<String> altExp : altExplanations) {
+                explanation.addAll(altExp);
+            }
+            return new MatchResult(explanation, pos, false);
         }
-
-        return explanation.toString();
     }
 
+    // Repeat node
+    public static class RepeatNode extends Node {
+        public final Node node;
+        public final int min;
+        public final int max;
+
+        public RepeatNode(Node node, int min, int max) {
+            this.node = node;
+            this.min = min;
+            this.max = max;
+        }
+
+        @Override
+        public List<String> generate() {
+            List<String> subs = node.generate();
+            List<String> results = new ArrayList<>();
+            for (int count = min; count <= max; count++) {
+                if (count == 0) {
+                    results.add("");
+                } else {
+                    List<String> temp = Collections.singletonList("");
+                    for (int i = 0; i < count; i++) {
+                        List<String> newTemp = new ArrayList<>();
+                        for (String prefix : temp) {
+                            for (String sub : subs) {
+                                newTemp.add(prefix + sub);
+                            }
+                        }
+                        temp = newTemp;
+                    }
+                    results.addAll(temp);
+                }
+            }
+            return results;
+        }
+
+        @Override
+        public MatchResult match(String s, int pos) {
+            int count = 0;
+            List<String> explanation = new ArrayList<>();
+            int currentPos = pos;
+
+            while (count < max) {
+                MatchResult res = node.match(s, currentPos);
+                if (res.success && res.newPos > currentPos) {
+                    explanation.addAll(res.explanation);
+                    count++;
+                    currentPos = res.newPos;
+                } else {
+                    break;
+                }
+            }
+            if (count < min) {
+                explanation.add("Repeat failed: expected at least " + min + " matches but got " + count + " at position " + pos);
+                return new MatchResult(explanation, currentPos, false);
+            }
+            explanation.add("Matched repeat node " + count + " times from position " + pos + " to " + currentPos);
+            return new MatchResult(explanation, currentPos, true);
+        }
+    }
+
+    // Parsing functions
+
+    private String s;
+    private int pos;
+
+    public RegexGenerator(String s) {
+        this.s = s;
+        this.pos = 0;
+    }
+
+    private Node parseExpression(Set<Character> stopChars) throws Exception {
+        List<Node> alternatives = new ArrayList<>();
+        List<Node> sequence = new ArrayList<>();
+
+        while (pos < s.length() && !stopChars.contains(s.charAt(pos))) {
+            char c = s.charAt(pos);
+            if (c == '|') {
+                alternatives.add(sequenceToNode(sequence));
+                sequence = new ArrayList<>();
+                pos++; // skip '|'
+            } else {
+                Node node = parseAtom();
+                sequence.add(node);
+            }
+        }
+        alternatives.add(sequenceToNode(sequence));
+
+        if (alternatives.size() == 1) {
+            return alternatives.get(0);
+        } else {
+            return new AlternationNode(alternatives);
+        }
+    }
+
+    private Node sequenceToNode(List<Node> seq) {
+        if (seq.isEmpty()) {
+            return new LiteralNode("");
+        }
+        if (seq.size() == 1) {
+            return seq.get(0);
+        }
+        return new SequenceNode(seq);
+    }
+
+    private Node parseAtom() throws Exception {
+        if (pos >= s.length()) {
+            throw new Exception("Unexpected end of input");
+        }
+
+        char c = s.charAt(pos);
+        Node node;
+
+        if (c == '(') {
+            pos++; // skip '('
+            node = parseExpression(new HashSet<>(Collections.singletonList(')')));
+            if (pos >= s.length() || s.charAt(pos) != ')') {
+                throw new Exception("Missing closing parenthesis");
+            }
+            pos++; // skip ')'
+        } else {
+            int start = pos;
+            while (pos < s.length() && "() *+|^".indexOf(s.charAt(pos)) == -1) {
+                pos++;
+            }
+            String literal = s.substring(start, pos);
+            node = new LiteralNode(literal);
+        }
+
+        // Check quantifiers *, +, ^number
+        if (pos < s.length()) {
+            char q = s.charAt(pos);
+            if (q == '*') {
+                node = new RepeatNode(node, 0, 5);
+                pos++;
+            } else if (q == '+') {
+                node = new RepeatNode(node, 1, 5);
+                pos++;
+            } else if (q == '^') {
+                pos++;
+                int numStart = pos;
+                while (pos < s.length() && Character.isDigit(s.charAt(pos))) {
+                    pos++;
+                }
+                if (numStart == pos) {
+                    throw new Exception("Expected number after '^'");
+                }
+                int number = Integer.parseInt(s.substring(numStart, pos));
+                node = new RepeatNode(node, number, number);
+            }
+        }
+        return node;
+    }
+
+    public Node parse() throws Exception {
+        pos = 0;
+        Node tree = parseExpression(new HashSet<>());
+        if (pos != s.length()) {
+            throw new Exception("Unexpected characters at end of regex");
+        }
+        return tree;
+    }
+
+    // Dynamic sequence processing (step-by-step explanation)
+    public static String dynamicSequenceProcessing(Node tree, String testStr) {
+        MatchResult res = tree.match(testStr, 0);
+        List<String> explanation = new ArrayList<>(res.explanation);
+        if (!res.success) {
+            explanation.add("Matching failed.");
+        } else if (res.newPos < testStr.length()) {
+            explanation.add("Extra characters remain after position " + res.newPos + ".");
+        } else {
+            explanation.add("String fully matched the regex!");
+        }
+        return explanation.stream().collect(Collectors.joining("\n"));
+    }
+
+    // Main for demonstration
     public static void main(String[] args) {
-        List<String> validStrings = generateValidStrings();
+        String[] regexList = {
+                "(S|T)(U|V)W*Y+24",
+                "L(M|N)O^3P*Q(2|3)",
+                "R*S(T|U|V)W(X|Y|Z)^2",
+                "O(P|Q|R)+2(3|4)" // example from variant 3
+        };
 
-        // Expression 1 matches
-        System.out.println("===== Expression 1 matches =====");
-        for (int i = 0; i < 10 && i < validStrings.size(); i++) {
-            System.out.println(validStrings.get(i));
-        }
-        System.out.println("Total count: " + validStrings.size());
+        for (int i = 0; i < regexList.length; i++) {
+            String regex = regexList[i];
+            System.out.println("===== Expression " + (i + 1) + ": " + regex + " =====");
+            try {
+                RegexGenerator parser = new RegexGenerator(regex);
+                Node tree = parser.parse();
 
-        // Expression 2 matches
-        System.out.println("\n===== Expression 2 matches =====");
-        int totalCount = 0;
-        for (int i = 0; i < validStrings.size(); i++) {
-            if (validStrings.get(i).matches("L(M|N)O000*P*Q(2|3)")) {
-                System.out.println(validStrings.get(i));
-                totalCount++;
+                List<String> validStrings = tree.generate();
+                System.out.println("First 10 strings:");
+                for (int j = 0; j < Math.min(10, validStrings.size()); j++) {
+                    System.out.println(validStrings.get(j));
+                }
+                System.out.println("Total count: " + validStrings.size());
+            } catch (Exception e) {
+                System.out.println("Error generating strings for " + regex + ": " + e.getMessage());
             }
+            System.out.println();
         }
-        System.out.println("Total count: " + totalCount);
 
-        // Expression 3 matches
-        System.out.println("\n===== Expression 3 matches =====");
-        totalCount = 0;
-        for (int i = 0; i < validStrings.size(); i++) {
-            if (validStrings.get(i).matches("R*S(T|U|V)W(X|Y|Z)")) {
-                System.out.println(validStrings.get(i));
-                totalCount++;
-            }
-        }
-        System.out.println("Total count: " + totalCount);
-
-        // Bonus point test string
-        System.out.println("\n===== Bonus point test string =====");
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter test string for expression 1 (ex. SUWWYY24): ");
-        String testString = scanner.nextLine();
-        System.out.println(sequenceProcessing(testString));
+        System.out.println("===== Bonus: Dynamic Sequence Processing =====");
+        System.out.print("Enter a regex: ");
+        String regex = scanner.nextLine();
+        System.out.print("Enter test string for dynamic processing: ");
+        String testStr = scanner.nextLine();
+
+        try {
+            RegexGenerator parser = new RegexGenerator(regex);
+            Node tree = parser.parse();
+            String result = dynamicSequenceProcessing(tree, testStr);
+            System.out.println(result);
+        } catch (Exception e) {
+            System.out.println("Regex parsing error: " + e.getMessage());
+        }
+
+        scanner.close();
     }
 }
